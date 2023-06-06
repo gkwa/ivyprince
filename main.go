@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 type FileStruct struct {
@@ -19,8 +21,10 @@ type FileStruct struct {
 	FileTimestamp      time.Time
 }
 
-type ByTimestamp []FileStruct
-type ByS3ModificationTime []FileStruct
+type (
+	ByTimestamp          []FileStruct
+	ByS3ModificationTime []FileStruct
+)
 
 func (f ByTimestamp) Len() int           { return len(f) }
 func (f ByTimestamp) Swap(i, j int)      { f[i], f[j] = f[j], f[i] }
@@ -96,26 +100,7 @@ func main() {
 	// Print the sorted files with relative timestamps
 	fmt.Println("Sorted Files:")
 	for _, file := range files {
-		relativeTime := time.Since(file.FileTimestamp)
-		fmt.Printf("S3 Modification Time: %s, File Size: %d bytes, Filename: %s, Relative Timestamp: %s\n",
-			file.S3ModificationTime.Format("2006-01-02 15:04:05"), file.FileSize, file.Filename, formatRelativeTime(relativeTime))
-	}
-}
-
-// Formats the given duration to a human-readable relative time format
-func formatRelativeTime(duration time.Duration) string {
-	seconds := int64(duration.Seconds())
-
-	switch {
-	case seconds < 60:
-		return fmt.Sprintf("%ds", seconds)
-	case seconds < 3600:
-		return fmt.Sprintf("%dm", seconds/60)
-	case seconds < 86400:
-		return fmt.Sprintf("%dh", seconds/3600)
-	case seconds < 604800:
-		return fmt.Sprintf("%dd", seconds/86400)
-	default:
-		return fmt.Sprintf("%dy", seconds/31536000)
+		fmt.Printf("S3 Modification Time: %s, File Size: %s, Filename: %s, Relative Timestamp: %s\n",
+			file.S3ModificationTime.Format("2006-01-02 15:04:05"), humanize.Bytes(uint64(file.FileSize)), file.Filename, humanize.Time(file.FileTimestamp))
 	}
 }
